@@ -1,0 +1,4 @@
+*.mhd
+*.raw
+.idea
+venv
