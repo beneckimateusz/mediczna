@@ -3,7 +3,8 @@ import matplotlib.pylab as plt
 
 # https://stackoverflow.com/questions/37290631/reading-mhd-raw-format-in-python
 # (512, 512, 439)
-ct_scans = sitk.GetArrayFromImage(sitk.ReadImage("volume_14.mhd", sitk.sitkFloat32))
+ct_scans = sitk.GetArrayFromImage(sitk.ReadImage("data/volume_14.mhd", sitk.sitkFloat32))
+# ct_scans = sitk.GetArrayFromImage(sitk.ReadImage("data/segmentation_14.mhd", sitk.sitkFloat32))
 # subset
 ct_scans = ct_scans[:513][:513][150:180]
 
