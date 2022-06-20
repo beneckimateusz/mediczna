@@ -1,0 +1,95 @@
+import argparse
+from pathlib import Path
+from medpy.io import load
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider, Button
+
+def get_program_parameters():
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('data_folder', help='The path to segmentation and volume mhd/raw files')
+    parser.add_argument('volume_filename', help='e.g. volume_14.mhd')
+    parser.add_argument('true_segmentation_filename', help='e.g segmentation_14.mhd')
+    parser.add_argument('computed_segmentation_filename', help='e.g segmentation_14.mhd')
+    args = parser.parse_args()
+    return args
+
+
+args = get_program_parameters()
+
+# Load mhd files
+path = Path(args.data_folder)
+
+volume_path = str(path.joinpath(args.volume_filename))
+volume_img, _ = load(volume_path)
+
+truth_source_path = str(path.joinpath(args.true_segmentation_filename))
+truth_source_img, _ = load(truth_source_path)
+
+computed_path = str(path.joinpath(args.computed_segmentation_filename))
+computed_img, _ = load(computed_path)
+
+# Prepare the plot
+fig, axs = plt.subplots(2, 2)
+volume = axs[0, 0]
+truth_source = axs[0, 1]
+computed = axs[1, 0]
+diff = axs[1, 1]
+
+volume.set_title('Volume')
+truth_source.set_title('Truth source')
+computed.set_title('Computed')
+
+volume.imshow(volume_img[0], cmap='Greys')
+truth_source.imshow(truth_source_img[0], cmap='Greys')
+computed.imshow(computed_img[0], cmap='Greys')
+# volume_ax = volume.imshow(volume_img[0], cmap='Greys')
+# truth_source_ax = truth_source.imshow(truth_source_img[0], cmap='Greys')
+# computed_ax = computed.imshow(computed_img[0], cmap='Greys')
+
+# Adjust the main plot to make room for the sliders
+fig.subplots_adjust(bottom=0.25, hspace=0.5)
+
+# Make a horizontal slider to control the displayed frame
+axfreq = plt.axes([0.25, 0.1, 0.65, 0.03])
+frame_slider = Slider(
+    ax=axfreq,
+    label='Frame',
+    valmin=0,
+    valmax=volume_img.shape[0] - 1,
+    valinit=0,
+    valfmt="%i"
+)
+
+
+# The function to be called anytime a slider's value changes
+def update(val):
+    rounded = round(val)
+
+    # approach 1 - faster, does not work for truth_source and computed_ax
+    # if the 0th frame is empty
+    # truth_source_ax.set(data=truth_source_img[rounded], cmap='Greys')
+    # volume_ax.set(data=volume_img[rounded], cmap='Greys')
+    # computed_ax.set(data=computed_img[rounded], cmap='Greys')
+    # fig.canvas.draw()
+
+    # approach 2 - much slower, works every time
+    volume.imshow(volume_img[rounded], cmap='Greys')
+    truth_source.imshow(truth_source_img[rounded], cmap='Greys')
+    computed.imshow(computed_img[rounded], cmap='Greys')
+
+
+# Register the update function with the slider
+frame_slider.on_changed(update)
+
+# Create a `matplotlib.widgets.Button` to reset the slider to initial value
+resetax = plt.axes([0.8, 0.025, 0.1, 0.04])
+button = Button(resetax, 'Reset', hovercolor='0.975')
+
+
+def reset(event):
+    frame_slider.reset()
+
+
+button.on_clicked(reset)
+
+plt.show()
