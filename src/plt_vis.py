@@ -1,7 +1,10 @@
+# links
+# # https://stackoverflow.com/questions/31877353/overlay-an-image-segmentation-with-numpy-and-matplotlib
 import argparse
 from pathlib import Path
 from medpy.io import load
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.widgets import Slider, Button
 
 def get_program_parameters():
@@ -29,22 +32,24 @@ computed_path = str(path.joinpath(args.computed_segmentation_filename))
 computed_img, _ = load(computed_path)
 
 # Prepare the plot
-fig, axs = plt.subplots(2, 2)
-volume = axs[0, 0]
-truth_source = axs[0, 1]
-computed = axs[1, 0]
-diff = axs[1, 1]
+fig, axs = plt.subplots(1, 3)
+truth_source = axs[0]
+diff = axs[1]
+computed = axs[2]
 
-volume.set_title('Volume')
 truth_source.set_title('Truth source')
 computed.set_title('Computed')
+diff.set_title('Diff')
 
-volume.imshow(volume_img[0], cmap='Greys')
 truth_source.imshow(truth_source_img[0], cmap='Greys')
 computed.imshow(computed_img[0], cmap='Greys')
+diff.imshow(volume_img[0], cmap='Greys')
 # volume_ax = volume.imshow(volume_img[0], cmap='Greys')
 # truth_source_ax = truth_source.imshow(truth_source_img[0], cmap='Greys')
 # computed_ax = computed.imshow(computed_img[0], cmap='Greys')
+
+# Masks
+intersection = np.logical_and(truth_source_img > 0, computed_img > 0)
 
 # Adjust the main plot to make room for the sliders
 fig.subplots_adjust(bottom=0.25, hspace=0.5)
@@ -73,9 +78,11 @@ def update(val):
     # fig.canvas.draw()
 
     # approach 2 - much slower, works every time
-    volume.imshow(volume_img[rounded], cmap='Greys')
     truth_source.imshow(truth_source_img[rounded], cmap='Greys')
     computed.imshow(computed_img[rounded], cmap='Greys')
+
+    diff.imshow(volume_img[rounded], cmap='Greys')
+    diff.imshow(intersection[rounded], cmap='Purples', alpha=0.5)
 
 
 # Register the update function with the slider
