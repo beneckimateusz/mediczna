@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.widgets import Slider, Button
 from matplotlib.colors import ListedColormap
+from medpy.metric.binary import hd, assd, asd, dc, jc
+from medpy.io import header
 
 def get_program_parameters():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -18,20 +20,28 @@ def get_program_parameters():
     return args
 
 
+
 args = get_program_parameters()
 
 # Load mhd files
 path = Path(args.data_folder)
 
 volume_path = str(path.joinpath(args.volume_filename))
-volume_img, _ = load(volume_path)
+volume_img, volume_header = load(volume_path)
 
 truth_source_path = str(path.joinpath(args.true_segmentation_filename))
-truth_source_img, _ = load(truth_source_path)
+truth_source_img, truth_source_header = load(truth_source_path)
 
 computed_path = str(path.joinpath(args.computed_segmentation_filename))
 computed_img, _ = load(computed_path)
+# calculate metrics
+spacing = truth_source_header.get_voxel_spacing()
 
+print(f"Hausdorff distance: {hd(computed_img, truth_source_img, spacing)}")
+print(f"Average surface distance: {asd(computed_img, truth_source_img, spacing)}")
+print(f"Average symmetric surface distance: {assd(computed_img, truth_source_img, spacing)}")
+print(f"Dice coeff: {dc(computed_img, truth_source_img)}")
+print(f"Jaccard index: {jc(computed_img, truth_source_img)}")
 # Prepare the plot
 fig, axs = plt.subplots(1, 3)
 truth_source = axs[0]
@@ -95,9 +105,9 @@ def update(val):
     computed.imshow(computed_img[rounded], cmap='Reds')
 
     diff.imshow(volume_img[rounded], cmap='Greys')
-    diff.imshow(intersection[rounded], cmap='Purples', alpha=0.2)
-    diff.imshow(truth_minus_computed[rounded], cmap='Blues', alpha=0.2)
-    diff.imshow(computed_minus_truth[rounded], cmap='Reds', alpha=0.2)
+    diff.imshow(intersection[rounded], cmap='Purples', alpha=0.4)
+    diff.imshow(truth_minus_computed[rounded], cmap='Blues', alpha=0.4)
+    diff.imshow(computed_minus_truth[rounded], cmap='Reds', alpha=0.4)
 
 
 # Register the update function with the slider
